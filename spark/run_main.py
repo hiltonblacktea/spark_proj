@@ -109,7 +109,6 @@ def get_all_csv(spark,adjust_path):
     Return:
         csv - 所有資料集合併完成之 dataframe 物件資料 , <pyspark.sql.dataframe.DataFrame>
     """
-
     orig_csv = spark.read.csv(adjust_path + 'crawler/data/A_lvr_land_A.csv',header=True)
     rename_col_csv = rename_col(orig_csv)
     csv = rename_col_csv.withColumn("city",lit("台北市"))
@@ -159,9 +158,10 @@ def add_col_total_floor_number_int(csv):
 ### change_data_for_filter
 
 def main():
-    # 連線spark
+    # 連線spark,取得所有資料集數據
     spark = session.builder.master('local').appName('test').config('spark.debug.maxToStringFields', 100).getOrCreate()
     csv =  add_col_total_floor_number_int(get_all_csv(spark,'../'))
+
     # 過濾出符合 1.總樓層數大於等於13層 2. 主要用途為<住家用> 3. 建物類型為<住宅大樓>(模糊查詢)
     filted_data = csv.filter((csv['total_floor_number_int']>=13) & (csv['main_use']=='住家用') & (csv['building_state'].like('住宅大樓%')))
     
@@ -195,8 +195,9 @@ def main():
             json_data = result_json[index]
             json.dump(json_data,f,ensure_ascii=False,indent=2)
             f.close()
-    
-    print('done...')
+    spark.stop()
+    print ('spark stoped ...')
+    print('done')
     return
     
 if __name__ == "__main__":
