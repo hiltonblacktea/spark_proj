@@ -1,5 +1,5 @@
 # spark_proj
-透過selenium進行爬蟲取得內政部資料 以spark進行資料處理存入json檔&amp;建置API提供資料集查詢
+## 透過selenium進行爬蟲取得內政部資料 以spark進行資料處理寫入json檔&amp;建置API提供資料集查詢
 
 該程式集是以python virtualenv打包(非包含spark建置，需確認機器環境內spark能夠正常運行)，使用上需要先進到該虛擬環境內才可正確使用。
 
@@ -21,13 +21,13 @@ cd {git}/Scripts/  ※{git}為版控拉下來之目的路徑。
 
 按照爬蟲規則進行網頁自動化處理
 
-下載完成進行解壓縮並留下data資料夾內數據集(該數據集為spark過濾&存入json檔 以及 WEB API使用之數據)
+下載完成進行解壓縮並留下data資料夾內數據集(該數據集為spark過濾&寫入json檔 以及 WEB API使用之數據)
 
 程式執行 :  {git}/crawler/run_main.py
 
 ---
 
-## spark 過濾並存入json檔
+## spark 過濾並寫入json檔
 
 目的 : 透過 spark 合併 臺北市 新北市 桃園市 臺中市 高雄市 所有數據集，以過濾條件篩選資料 ， 並將結果隨機寫入json檔
 
@@ -56,17 +56,17 @@ python manage.py runserver
 
 WEB API使用方法:
 
-使用者將以網頁 Get方式進行查詢，可查詢參數有:
+使用者將以網頁 GET 方式進行查詢，可查詢參數有:
 < city > , < floor > , < building_type > 對應之資訊為 <鄉鎮市區>,<總樓層數>,<建物型態>
-參數格式為 : < string > , < int > , < string >
+
+參數型態為 : < string > , < int > , < string >
 
 URL格式 : <ip:port/get/getData?param=?&param=?>   *目前設計上不允許不帶參數使用。*
+
+範例 http://127.0.0.1:8000/data/getData?city=台北市&floor=13&building_type=其他
 
 回傳為json格式 (response = [ {…} , {…} , {…} ])
 
 *預設python manager runserver將會在本地端建立一server , port為8000 , 也可在runserver後加上指定port使用特定port號*
 
 ### *spark過濾&寫入json檔 以及 WEB API 使用之資料集為爬蟲程式結果 , 使用前須先執行爬蟲程式*
-
-
-
