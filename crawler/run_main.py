@@ -1,42 +1,57 @@
 import os , shutil
+import socket
 import time 
 from zipfile import ZipFile
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import ui
 
 TARGET_FILES = ['A_lvr_land_A.csv','B_lvr_land_A.csv','E_lvr_land_A.csv','F_lvr_land_A.csv','H_lvr_land_A.csv']
-
 class Crawler():
     """
         透過selenium進行網路爬蟲，將下載檔案解壓並存至data資料夾供後續使用
     """
+    
+    
     def __init__(self):
         self.current_path = os.getcwd() + os.sep
-        self.chrome_driver = self.current_path + "driver/chromedriver_ver95.exe"
         self.web_path = 'https://plvr.land.moi.gov.tw/DownloadOpenData'
-    
-        self.target_download = self.current_path + 'download' + os.sep
+        self.tmp_download = '/tmp/'
+
+        self.target_download = self.tmp_download+ 'download' 
         if not os.path.exists(self.target_download):
             os.mkdir(self.target_download)
 
-        self.data_file_path = self.current_path + 'data'
+        self.data_file_path = self.current_path + 'data' 
+        if not os.path.exists(self.data_file_path):
+            os.mkdir(self.data_file_path)
+        else:
+            # 檢查file是否已存在
+            for data in os.listdir(self.data_file_path):
+                if data in TARGET_FILES:
+                    print(data + ' already exist ... ')
+                    TARGET_FILES.remove(data)
+            if len(TARGET_FILES) == 0:
+                exit('all data exists , exiting...')
+
 
     def get_crawler_service(self,):
-        """透過chrome driver連線至目標網站
+        """透過chrome driver Remote連線至chrome driver container 後連線至目標網站
         Return:
             chrome driver連線服務物件
         """
         prefs = {
-            'profile.default_content_setting_popups' : 0 ,
+            'profile.default_content_settings_popups' : 0 ,
             'download.default_directory' : self.target_download
         }
         options = webdriver.ChromeOptions()
         options.add_experimental_option('prefs',prefs)
-        get_service = Service(self.chrome_driver)
-        web = webdriver.Chrome(service=get_service,chrome_options=options)
+
+        ip = socket.gethostbyname('selenium-hub')
+        ip_addr = 'http://' + ip + ':4444/wd/hub'
+        web= webdriver.Remote(command_executor=ip_addr,desired_capabilities=DesiredCapabilities.CHROME,options=options)
         web.get(self.web_path)
         return web
 
@@ -52,6 +67,9 @@ class Crawler():
             4. 點選目標城市
             5. 點選下載按鈕
         """
+        time.sleep(1)
+        print('crawler start...')
+        
         # 透過 element id 搜尋 非本期下載 並點選
         web.find_element(By.ID,'ui-id-2').click()
 
@@ -89,21 +107,18 @@ class Crawler():
                 break
             else:
                 print ('downloading...')
-                time.sleep(0.5)
+                time.sleep(1)
 
     def zip_file_get_target_file(self,):
         """解壓縮下載完畢之檔案，保留所需csv檔移至data資料夾，清除其餘非必要檔案
         """
         # 解壓縮檔案
-        with ZipFile(self.target_download+'download.zip','r') as zip:
+        with ZipFile(self.target_download+ os.sep+'download.zip','r') as zip:
             zip.extractall(self.target_download)
 
         for data in os.listdir(self.target_download):
             if data in TARGET_FILES :
-                if os.path.isfile(self.data_file_path+os.sep + data):
-                    print (data + ' already exist ... ')
-                    continue
-                shutil.move(self.target_download+data,self.data_file_path)
+                shutil.move(self.target_download+os.sep+data,self.data_file_path+os.sep)
 
         shutil.rmtree(self.target_download,ignore_errors=True)
 

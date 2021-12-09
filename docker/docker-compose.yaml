@@ -1,0 +1,39 @@
+
+# To execute this docker-compose yml file use docker-compose -f <file_name> up
+# Add the "-d" flag at the end for deattached execution
+version: "3"
+services:
+  selenium-hub:
+    image: selenium/hub:3.12.0-boron
+    container_name: selenium-hub
+    ports:
+      - "4448:4444"
+    depends_on:
+      - spark
+  chrome:
+#    image: selenium/node-chrome:3.12.0-boron
+    image: selenium/node-chrome-debug:3.12.0-boron
+    container_name: selenium-chrome
+    depends_on:
+      - selenium-hub
+      - spark
+    environment:
+      - HUB_HOST=selenium-hub
+      - HUB_PORT=4444
+    ports:
+      - "5900:5900"
+    volumes:
+      - datas:/tmp/download
+  spark:
+    image: myspark:latest
+    container_name: spark_env
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    entrypoint: "sh /entrypoint.sh "
+    volumes:
+      - datas:/tmp/download
+    
+volumes:
+  datas:
+

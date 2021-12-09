@@ -1,17 +1,16 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
-from rest_framework.response import Response 
-from django.http import JsonResponse
+from rest_framework.response import Response
 # Create your views here.
 
 import sys
 import json
-sys.path.append('../../spark/')
+sys.path.append('/spark')
+
 import findspark
 findspark.init()
 from pyspark.sql import SparkSession as session
-from spark.run_main import get_all_csv ,add_col_total_floor_number_int
-from pyspark import SparkConf
+from run_main import get_all_csv ,add_col_total_floor_number_int
 
 class get_data(APIView):
 

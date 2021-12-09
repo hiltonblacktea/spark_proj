@@ -1,14 +1,37 @@
 # -*- utf-8 -*-
 import findspark
 import json
-from datetime import datetime as dt
+import os
+import collections
 from random import randint
-import cn2an
+from change_cn2an import cn2an
 # 在python cmd 無法正常 -> init內帶入spark檔案位置()
 findspark.init()
 
 from pyspark.sql import SparkSession as session
 from pyspark.sql.functions import when , lit , desc
+
+json_file = ['result-part1.json','result-part2.json']
+TARGET_FILES = ['A_lvr_land_A.csv','B_lvr_land_A.csv','E_lvr_land_A.csv','F_lvr_land_A.csv','H_lvr_land_A.csv']
+
+def check_files_exist(target_files):
+    """確認資料集皆存在
+    Parameters:
+        target_files - 保存資料集之資料夾
+    Return:
+        boolean , True -> 資料集皆存在 False -> 資料集有缺陷 
+    """
+    sign = True
+    if not os.path.exists(target_files):
+        print('data dir is not exist...\n')
+        return False
+    data_file_list = os.listdir(target_files)
+    for data in TARGET_FILES:
+        if data not in data_file_list:
+            print(data+' not in file!!!\n')
+            sign = False
+    return sign
+### check_files_exist
 
 def format_date(date):
     """將交易年月日修改成規定format <%Y-%m-%d>
@@ -68,7 +91,9 @@ def classify_data_by_city(data,result_dict):
 
     # 整理的字典檔keys沒有該city -> 第一筆city數據
     if city not in result_dict.keys():
-        result_dict[city]={'city':city,'time_slots':[time_slots_data]}
+        result_dict[city] = collections.OrderedDict()
+        result_dict[city]['city'] = city
+        result_dict[city]['time_slots'] = [time_slots_data]
     else:
         result_dict[city]['time_slots'].append(time_slots_data)
 
@@ -152,12 +177,17 @@ def add_col_total_floor_number_int(csv):
         if floor:
             if floor[-1] != '層':
                 continue
-            int_floor = cn2an.cn2an(floor[0:-1],)
+            int_floor = cn2an(floor[0:-1],)
             csv = csv.withColumn('total_floor_number_int',when(csv.total_floor_number==floor,int_floor).otherwise(csv.total_floor_number_int))
     return csv
 ### change_data_for_filter
 
 def main():
+    # 確認資料集完整性
+    if False == check_files_exist('/crawler/data'):
+        print (','.join(TARGET_FILES)+' is required')
+        exit('please crawler data first by using /crawler/run_main.py ')
+    
     # 連線spark,取得所有資料集數據
     spark = session.builder.master('local').appName('test').config('spark.debug.maxToStringFields', 100).getOrCreate()
     csv =  add_col_total_floor_number_int(get_all_csv(spark,'../'))
@@ -179,7 +209,7 @@ def main():
 
     # 將五個城市隨機放進兩個陣列
     result_json = [[],[]]
-    json_file = ['result-part1.json','result-part2.json']
+    
     citys = ['台北市','臺中市','高雄市','新北市','桃園市']
     for i in range(len(citys)):
         random_num = randint(1,2)
