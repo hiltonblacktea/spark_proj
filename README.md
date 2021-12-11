@@ -1,13 +1,16 @@
 # spark_proj
 ## 透過selenium進行爬蟲取得內政部資料 以spark進行資料處理寫入json檔&amp;建置API提供資料集查詢
 
-該程式集是以python virtualenv打包(非包含spark建置，需確認機器環境內spark能夠正常運行)，使用上需要先進到該虛擬環境內才可正確使用。
+基於gettyimages/spark + selenium/hub + selenium/node-chrome 建置
 
-進入虛擬環境流程 : 
+環境建置流程:
 
-cd {git}/Scripts/  ※{git}為版控拉下來之目的路徑。
+./build_image.sh => 建置主要image name=myspark
 
-./activate
+./start_service.sh => 透過docker-compose運行服務
+
+※ 服務運行時啟用Django內建server 可於網頁127.0.0.1:8000確認(若8000 port正在使用 可至enrtypoint.sh內修改python manage.py runserver < port > 設定port號)
+
 
 ---
 
@@ -15,7 +18,11 @@ cd {git}/Scripts/  ※{git}為版控拉下來之目的路徑。
 
 目的 : 抓取 內政部不動產時價登錄網 中位於 臺北市 新北市 桃園市 臺中市 高雄市  的  不動產買賣  csv格式資料 ， 資料內容為108年第2季 
 
-流程: 
+環境 : 
+  * 透過 container selenium/hub & selenium/node-chrome-debug 實行 chrome driver 使用
+  * 基於node-chrome-debug ,可以透過VNC Viewer 至 5900 port 查看目前web crwaler執行畫面
+  
+程式流程: 
 
 使用selenium透過chrome_driver取得連線服務並連線至目標網站
 
@@ -23,7 +30,7 @@ cd {git}/Scripts/  ※{git}為版控拉下來之目的路徑。
 
 下載完成進行解壓縮並留下data資料夾內數據集(該數據集為spark過濾&寫入json檔 以及 WEB API使用之數據)
 
-程式執行 :  {git}/crawler/run_main.py
+程式執行 :  (in containrt spark_env) /crawler/run_main.py
 
 ---
 
@@ -40,7 +47,7 @@ cd {git}/Scripts/  ※{git}為版控拉下來之目的路徑。
 5. 將過濾完的數據逐筆轉成json型態並且按照城市整理出字典檔
 6. 透過隨機數值randint隨機將不同城市資料寫入兩檔案內。
 
-程式執行 :  {git}/spark/run_main.py
+程式執行 :  (in containrt spark_env) /spark/run_main.py
 
 ### *spark過濾&寫入json檔 以及 WEB API 使用之資料集為爬蟲程式結果 , 使用前須先執行爬蟲程式*
 

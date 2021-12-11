@@ -17,14 +17,14 @@ class get_data(APIView):
     def get(self,request,*args,**kwds):
         """ GET Method
         """
-        spark , csv = self.get_dataframe()
-
         get_data = request.GET
-        
+
         # params is required now.
         if len(get_data.keys())==0:
             return Response({"params error":"params is required , please use '?param=<param>' behind the URL"})
-        
+
+        spark , csv = self.get_dataframe()
+
         city , floor , building_type  = self.get_params(get_data)
 
         filt_str = self.get_filter(city,floor,building_type)
