@@ -33,7 +33,7 @@ services:
     entrypoint: "sh /entrypoint.sh "
     volumes:
       - datas:/tmp/download
-    
+
 volumes:
   datas:
 
